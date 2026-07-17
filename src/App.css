@@ -96,6 +96,17 @@
   flex: 1;
 }
 
+.ignored-toggle {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #333;
+  border-radius: 6px;
+  background: transparent;
+  color: #aaa;
+  font: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
 .account-list {
   margin-top: 1rem;
   list-style: none;
@@ -103,8 +114,23 @@
 }
 
 .account-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
   padding: 0.5rem 0;
   border-bottom: 1px solid #333;
+}
+
+.account-list li button {
+  padding: 0.25rem 0.6rem;
+  border: 1px solid #333;
+  border-radius: 6px;
+  background: transparent;
+  color: #aaa;
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
 }
 
 .account-list a {

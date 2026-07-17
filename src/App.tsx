@@ -1,5 +1,11 @@
 import { useState } from "react";
+import {
+  addIgnored,
+  getIgnored,
+  removeIgnored,
+} from "./adapters/ignoreListStorage";
 import { readDroppedFiles } from "./adapters/readDroppedFiles";
+import { applyIgnoreList } from "./core/applyIgnoreList";
 import { computeViews } from "./core/computeViews";
 import type { Views } from "./core/computeViews";
 import { filterAndSort, type SortBy } from "./core/filterAndSort";
@@ -32,6 +38,14 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<SortBy>("username");
+  const [ignored, setIgnored] = useState<Set<string>>(() => getIgnored());
+  const [showIgnored, setShowIgnored] = useState(false);
+
+  function toggleIgnored(username: string) {
+    setIgnored(
+      ignored.has(username) ? removeIgnored(username) : addIgnored(username),
+    );
+  }
 
   async function handleDrop(event: React.DragEvent<HTMLDivElement>) {
     event.preventDefault();
@@ -53,6 +67,11 @@ function App() {
     setSearch("");
     setSortBy("username");
   }
+
+  const visibleLists: Views | null = views && {
+    ...views,
+    notFollowingBack: applyIgnoreList(views.notFollowingBack, ignored),
+  };
 
   return (
     <main className="app">
@@ -97,7 +116,7 @@ function App() {
         </div>
       )}
 
-      {views && (
+      {views && visibleLists && (
         <>
           <div className="stat-cards">
             {VIEW_CARDS.map(({ key, label }) => (
@@ -107,7 +126,9 @@ function App() {
                 className={`stat-card${selectedView === key ? " stat-card--selected" : ""}`}
                 onClick={() => setSelectedView(key)}
               >
-                <span className="stat-card__count">{views[key].length}</span>
+                <span className="stat-card__count">
+                  {visibleLists[key].length}
+                </span>
                 <span className="stat-card__label">{label}</span>
               </button>
             ))}
@@ -129,21 +150,56 @@ function App() {
               <option value="username">Sort: username (A–Z)</option>
               <option value="date">Sort: relationship date</option>
             </select>
+            <button
+              type="button"
+              className="ignored-toggle"
+              onClick={() => setShowIgnored((v) => !v)}
+            >
+              ignored ({ignored.size})
+            </button>
           </div>
 
-          <ul className="account-list">
-            {filterAndSort(views[selectedView], { search, sortBy }).map((account) => (
-              <li key={account.username}>
-                <a
-                  href={`https://instagram.com/${account.username}`}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  {account.username}
-                </a>
-              </li>
-            ))}
-          </ul>
+          {showIgnored ? (
+            <ul className="account-list">
+              {[...ignored].sort().map((username) => (
+                <li key={username}>
+                  <a
+                    href={`https://instagram.com/${username}`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {username}
+                  </a>
+                  <button type="button" onClick={() => toggleIgnored(username)}>
+                    Un-ignore
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <ul className="account-list">
+              {filterAndSort(visibleLists[selectedView], {
+                search,
+                sortBy,
+              }).map((account) => (
+                <li key={account.username}>
+                  <a
+                    href={`https://instagram.com/${account.username}`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {account.username}
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => toggleIgnored(account.username)}
+                  >
+                    {ignored.has(account.username) ? "Un-ignore" : "Ignore"}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </>
       )}
     </main>
