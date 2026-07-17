@@ -7,4 +7,5 @@ export interface Account {
 export interface ParsedExport {
   following: Account[];
   followers: Account[];
+  pending: Account[];
 }

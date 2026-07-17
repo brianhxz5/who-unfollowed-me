@@ -28,6 +28,7 @@ function toAccounts(records: RawRecord[]): Account[] {
 export function parseExport(input: {
   followingJson: unknown;
   followersJsonFiles: unknown[];
+  pendingJson: unknown;
 }): ParsedExport {
   const followingJson = input.followingJson as FollowingExport;
   const following = toAccounts(followingJson.relationships_following);
@@ -36,5 +37,7 @@ export function parseExport(input: {
     toAccounts,
   );
 
-  return { following, followers };
+  const pending = toAccounts(input.pendingJson as RawRecord[]);
+
+  return { following, followers, pending };
 }

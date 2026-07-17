@@ -1,6 +1,7 @@
 export interface LocatedExportFiles {
   followingJson: unknown;
   followersJsonFiles: unknown[];
+  pendingJson: unknown;
 }
 
 function basename(path: string): string {
@@ -23,6 +24,9 @@ export function locateExportFiles(
   const followersEntries = entries
     .filter(([path]) => /^followers(_\d+)?\.json$/.test(basename(path)))
     .sort(([a], [b]) => followersFileNumber(a) - followersFileNumber(b));
+  const pendingEntry = entries.find(
+    ([path]) => basename(path) === "pending_follow_requests.json",
+  );
 
   if (!followingEntry) {
     return null;
@@ -31,5 +35,6 @@ export function locateExportFiles(
   return {
     followingJson: JSON.parse(followingEntry[1]),
     followersJsonFiles: followersEntries.map(([, text]) => JSON.parse(text)),
+    pendingJson: pendingEntry ? JSON.parse(pendingEntry[1]) : [],
   };
 }

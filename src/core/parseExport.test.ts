@@ -19,7 +19,11 @@ describe("parseExport", () => {
       ],
     };
 
-    const result = parseExport({ followingJson, followersJsonFiles: [] });
+    const result = parseExport({
+      followingJson,
+      followersJsonFiles: [],
+      pendingJson: [],
+    });
 
     expect(result.following).toEqual([
       {
@@ -48,6 +52,7 @@ describe("parseExport", () => {
     const result = parseExport({
       followingJson: { relationships_following: [] },
       followersJsonFiles: [followersJson],
+      pendingJson: [],
     });
 
     expect(result.followers).toEqual([
@@ -63,9 +68,10 @@ describe("parseExport", () => {
     const result = parseExport({
       followingJson: { relationships_following: [] },
       followersJsonFiles: [],
+      pendingJson: [],
     });
 
-    expect(result).toEqual({ following: [], followers: [] });
+    expect(result).toEqual({ following: [], followers: [], pending: [] });
   });
 
   it("merges multiple followers_N.json files into one follower list", () => {
@@ -99,6 +105,7 @@ describe("parseExport", () => {
     const result = parseExport({
       followingJson: { relationships_following: [] },
       followersJsonFiles: [followers1, followers2],
+      pendingJson: [],
     });
 
     expect(result.followers).toEqual([
@@ -111,6 +118,36 @@ describe("parseExport", () => {
         username: "dana",
         profileUrl: "https://www.instagram.com/dana",
         timestamp: 1630000000,
+      },
+    ]);
+  });
+
+  it("normalizes pending_follow_requests.json records (bare array)", () => {
+    const pendingJson = [
+      {
+        title: "",
+        media_list_data: [],
+        string_list_data: [
+          {
+            href: "https://www.instagram.com/erin",
+            value: "erin",
+            timestamp: 1640000000,
+          },
+        ],
+      },
+    ];
+
+    const result = parseExport({
+      followingJson: { relationships_following: [] },
+      followersJsonFiles: [],
+      pendingJson,
+    });
+
+    expect(result.pending).toEqual([
+      {
+        username: "erin",
+        profileUrl: "https://www.instagram.com/erin",
+        timestamp: 1640000000,
       },
     ]);
   });
