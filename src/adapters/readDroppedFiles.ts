@@ -1,4 +1,4 @@
-import { locateExportFiles, type LocatedExportFiles } from "../core/locateExportFiles";
+import { locateExportFiles, type LocateExportFilesResult } from "../core/locateExportFiles";
 import { unzipExport } from "./unzipExport";
 
 async function readLooseFiles(files: File[]): Promise<Record<string, string>> {
@@ -10,9 +10,9 @@ async function readLooseFiles(files: File[]): Promise<Record<string, string>> {
 
 export async function readDroppedFiles(
   files: File[],
-): Promise<LocatedExportFiles | null> {
+): Promise<LocateExportFilesResult> {
   if (files.length === 0) {
-    return null;
+    return { kind: "unrecognized" };
   }
 
   const isSingleZip = files.length === 1 && files[0].name.endsWith(".zip");

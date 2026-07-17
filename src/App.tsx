@@ -14,20 +14,37 @@ const VIEW_CARDS: { key: ViewKey; label: string }[] = [
   { key: "pending", label: "Pending requests" },
 ];
 
+const DOWNLOAD_INFO_URL =
+  "https://accountscenter.instagram.com/info_and_permissions/dyi/";
+
+const ERROR_MESSAGES: Record<"html-export" | "unrecognized", string> = {
+  "html-export":
+    "That looks like the HTML-format export. This app needs the JSON format — re-request your download and choose \"JSON\" instead of \"HTML\" as the file format.",
+  unrecognized:
+    "That doesn't look like an Instagram data export. Drop the export ZIP, or the following.json and followers_*.json files from inside it.",
+};
+
 function App() {
   const [views, setViews] = useState<Views | null>(null);
   const [selectedView, setSelectedView] = useState<ViewKey>("notFollowingBack");
   const [isDragging, setIsDragging] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleDrop(event: React.DragEvent<HTMLDivElement>) {
     event.preventDefault();
     setIsDragging(false);
 
     const files = Array.from(event.dataTransfer.files);
-    const dropped = await readDroppedFiles(files);
-    if (!dropped) return;
+    const result = await readDroppedFiles(files);
 
-    const parsed = parseExport(dropped);
+    if (result.kind !== "ok") {
+      setError(ERROR_MESSAGES[result.kind]);
+      setViews(null);
+      return;
+    }
+
+    setError(null);
+    const parsed = parseExport(result);
     setViews(computeViews(parsed));
     setSelectedView("notFollowingBack");
   }
@@ -49,6 +66,31 @@ function App() {
         <code>following.json</code> and <code>followers_*.json</code> files,
         here
       </div>
+
+      {error && <p className="error-message">{error}</p>}
+
+      {!views && !error && (
+        <div className="onboarding">
+          <p>New here? Get your export from Instagram first:</p>
+          <ol>
+            <li>
+              Go to{" "}
+              <a href={DOWNLOAD_INFO_URL} target="_blank" rel="noreferrer">
+                Download your information
+              </a>{" "}
+              in Instagram's settings.
+            </li>
+            <li>
+              Request a download of <strong>Followers and following</strong>{" "}
+              in <strong>JSON</strong> format (not HTML).
+            </li>
+            <li>
+              Once Instagram emails you the export, drop the ZIP (or the
+              extracted files) above.
+            </li>
+          </ol>
+        </div>
+      )}
 
       {views && (
         <>

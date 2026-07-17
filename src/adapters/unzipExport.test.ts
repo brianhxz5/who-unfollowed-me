@@ -26,4 +26,24 @@ describe("unzipExport", () => {
       ),
     ).toEqual([{ marker: "followers_1" }]);
   });
+
+  it("also extracts HTML file contents, so HTML-format exports can be detected", async () => {
+    const zipBytes = zipSync({
+      "connections/followers_and_following/following.html": strToU8(
+        "<html>not json</html>",
+      ),
+      "connections/followers_and_following/profile_photo.jpg": strToU8(
+        "binary data placeholder",
+      ),
+    });
+
+    const result = await unzipExport(zipBytes);
+
+    expect(
+      result["connections/followers_and_following/following.html"],
+    ).toBe("<html>not json</html>");
+    expect(
+      result["connections/followers_and_following/profile_photo.jpg"],
+    ).toBeUndefined();
+  });
 });

@@ -1,8 +1,12 @@
-export interface LocatedExportFiles {
-  followingJson: unknown;
-  followersJsonFiles: unknown[];
-  pendingJson: unknown;
-}
+export type LocateExportFilesResult =
+  | {
+      kind: "ok";
+      followingJson: unknown;
+      followersJsonFiles: unknown[];
+      pendingJson: unknown;
+    }
+  | { kind: "html-export" }
+  | { kind: "unrecognized" };
 
 function basename(path: string): string {
   return path.split("/").pop() ?? path;
@@ -15,12 +19,20 @@ function followersFileNumber(path: string): number {
 
 export function locateExportFiles(
   files: Record<string, string>,
-): LocatedExportFiles | null {
+): LocateExportFilesResult {
   const entries = Object.entries(files);
 
-  const followingEntry = entries.find(([path]) =>
-    basename(path) === "following.json",
+  const followingJsonEntry = entries.find(
+    ([path]) => basename(path) === "following.json",
   );
+  const followingHtmlEntry = entries.find(
+    ([path]) => basename(path) === "following.html",
+  );
+
+  if (!followingJsonEntry) {
+    return followingHtmlEntry ? { kind: "html-export" } : { kind: "unrecognized" };
+  }
+
   const followersEntries = entries
     .filter(([path]) => /^followers(_\d+)?\.json$/.test(basename(path)))
     .sort(([a], [b]) => followersFileNumber(a) - followersFileNumber(b));
@@ -28,12 +40,9 @@ export function locateExportFiles(
     ([path]) => basename(path) === "pending_follow_requests.json",
   );
 
-  if (!followingEntry) {
-    return null;
-  }
-
   return {
-    followingJson: JSON.parse(followingEntry[1]),
+    kind: "ok",
+    followingJson: JSON.parse(followingJsonEntry[1]),
     followersJsonFiles: followersEntries.map(([, text]) => JSON.parse(text)),
     pendingJson: pendingEntry ? JSON.parse(pendingEntry[1]) : [],
   };

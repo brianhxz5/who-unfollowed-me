@@ -11,6 +11,7 @@ describe("locateExportFiles", () => {
     const result = locateExportFiles(files);
 
     expect(result).toEqual({
+      kind: "ok",
       followingJson: { relationships_following: [] },
       followersJsonFiles: [[{ marker: "followers_1" }]],
       pendingJson: [],
@@ -26,7 +27,7 @@ describe("locateExportFiles", () => {
 
     const result = locateExportFiles(files);
 
-    expect(result?.followersJsonFiles).toEqual([
+    expect(result.kind === "ok" && result.followersJsonFiles).toEqual([
       [{ marker: "followers_1" }],
       [{ marker: "followers_2" }],
     ]);
@@ -49,6 +50,7 @@ describe("locateExportFiles", () => {
     const result = locateExportFiles(files);
 
     expect(result).toEqual({
+      kind: "ok",
       followingJson: { relationships_following: [] },
       followersJsonFiles: [
         [{ marker: "followers_1" }],
@@ -69,14 +71,24 @@ describe("locateExportFiles", () => {
 
     const result = locateExportFiles(files);
 
-    expect(result?.pendingJson).toEqual([{ marker: "pending" }]);
+    expect(result.kind === "ok" && result.pendingJson).toEqual([
+      { marker: "pending" },
+    ]);
   });
 
-  it("returns null when no following.json is present (not a recognizable export)", () => {
+  it("returns unrecognized when no following.json or following.html is present", () => {
     const files: Record<string, string> = {
       "random.json": JSON.stringify({ nothing: true }),
     };
 
-    expect(locateExportFiles(files)).toBeNull();
+    expect(locateExportFiles(files)).toEqual({ kind: "unrecognized" });
+  });
+
+  it("returns html-export when following.html is present but no following.json", () => {
+    const files: Record<string, string> = {
+      "connections/followers_and_following/following.html": "<html></html>",
+    };
+
+    expect(locateExportFiles(files)).toEqual({ kind: "html-export" });
   });
 });

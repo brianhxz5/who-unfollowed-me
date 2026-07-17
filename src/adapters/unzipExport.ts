@@ -10,7 +10,7 @@ export function unzipExport(zipBytes: Uint8Array): Promise<Record<string, string
 
       const files: Record<string, string> = {};
       for (const [path, data] of Object.entries(unzipped)) {
-        if (path.endsWith(".json")) {
+        if (path.endsWith(".json") || path.endsWith(".html")) {
           files[path] = strFromU8(data);
         }
       }
