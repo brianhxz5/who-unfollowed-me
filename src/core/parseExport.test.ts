@@ -19,7 +19,7 @@ describe("parseExport", () => {
       ],
     };
 
-    const result = parseExport({ followingJson, followersJson: [] });
+    const result = parseExport({ followingJson, followersJsonFiles: [] });
 
     expect(result.following).toEqual([
       {
@@ -47,7 +47,7 @@ describe("parseExport", () => {
 
     const result = parseExport({
       followingJson: { relationships_following: [] },
-      followersJson,
+      followersJsonFiles: [followersJson],
     });
 
     expect(result.followers).toEqual([
@@ -62,9 +62,56 @@ describe("parseExport", () => {
   it("returns empty lists when both exports are empty", () => {
     const result = parseExport({
       followingJson: { relationships_following: [] },
-      followersJson: [],
+      followersJsonFiles: [],
     });
 
     expect(result).toEqual({ following: [], followers: [] });
+  });
+
+  it("merges multiple followers_N.json files into one follower list", () => {
+    const followers1 = [
+      {
+        title: "",
+        media_list_data: [],
+        string_list_data: [
+          {
+            href: "https://www.instagram.com/bob",
+            value: "bob",
+            timestamp: 1620000000,
+          },
+        ],
+      },
+    ];
+    const followers2 = [
+      {
+        title: "",
+        media_list_data: [],
+        string_list_data: [
+          {
+            href: "https://www.instagram.com/dana",
+            value: "dana",
+            timestamp: 1630000000,
+          },
+        ],
+      },
+    ];
+
+    const result = parseExport({
+      followingJson: { relationships_following: [] },
+      followersJsonFiles: [followers1, followers2],
+    });
+
+    expect(result.followers).toEqual([
+      {
+        username: "bob",
+        profileUrl: "https://www.instagram.com/bob",
+        timestamp: 1620000000,
+      },
+      {
+        username: "dana",
+        profileUrl: "https://www.instagram.com/dana",
+        timestamp: 1630000000,
+      },
+    ]);
   });
 });

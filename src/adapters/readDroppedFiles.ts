@@ -1,26 +1,25 @@
-export interface DroppedExportFiles {
-  followingJson: unknown;
-  followersJson: unknown;
-}
+import { locateExportFiles, type LocatedExportFiles } from "../core/locateExportFiles";
+import { unzipExport } from "./unzipExport";
 
-function readFileAsJson(file: File): Promise<unknown> {
-  return file.text().then((text) => JSON.parse(text));
+async function readLooseFiles(files: File[]): Promise<Record<string, string>> {
+  const entries = await Promise.all(
+    files.map(async (file) => [file.name, await file.text()] as const),
+  );
+  return Object.fromEntries(entries);
 }
 
 export async function readDroppedFiles(
   files: File[],
-): Promise<DroppedExportFiles | null> {
-  const followingFile = files.find((f) => f.name.startsWith("following"));
-  const followersFile = files.find((f) => f.name.startsWith("followers"));
-
-  if (!followingFile || !followersFile) {
+): Promise<LocatedExportFiles | null> {
+  if (files.length === 0) {
     return null;
   }
 
-  const [followingJson, followersJson] = await Promise.all([
-    readFileAsJson(followingFile),
-    readFileAsJson(followersFile),
-  ]);
+  const isSingleZip = files.length === 1 && files[0].name.endsWith(".zip");
 
-  return { followingJson, followersJson };
+  const extractedFiles = isSingleZip
+    ? await unzipExport(new Uint8Array(await files[0].arrayBuffer()))
+    : await readLooseFiles(files);
+
+  return locateExportFiles(extractedFiles);
 }

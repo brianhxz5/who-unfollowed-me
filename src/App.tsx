@@ -37,8 +37,9 @@ function App() {
         onDragLeave={() => setIsDragging(false)}
         onDrop={handleDrop}
       >
-        Drop your <code>following.json</code> and <code>followers_1.json</code>{" "}
-        files here
+        Drop your Instagram data export <code>.zip</code>, or the individual{" "}
+        <code>following.json</code> and <code>followers_*.json</code> files,
+        here
       </div>
 
       {notFollowingBack && (

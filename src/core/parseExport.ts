@@ -27,12 +27,14 @@ function toAccounts(records: RawRecord[]): Account[] {
 
 export function parseExport(input: {
   followingJson: unknown;
-  followersJson: unknown;
+  followersJsonFiles: unknown[];
 }): ParsedExport {
   const followingJson = input.followingJson as FollowingExport;
   const following = toAccounts(followingJson.relationships_following);
 
-  const followers = toAccounts(input.followersJson as RawRecord[]);
+  const followers = (input.followersJsonFiles as RawRecord[][]).flatMap(
+    toAccounts,
+  );
 
   return { following, followers };
 }
