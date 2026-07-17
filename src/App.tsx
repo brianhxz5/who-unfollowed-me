@@ -2,6 +2,7 @@ import { useState } from "react";
 import { readDroppedFiles } from "./adapters/readDroppedFiles";
 import { computeViews } from "./core/computeViews";
 import type { Views } from "./core/computeViews";
+import { filterAndSort, type SortBy } from "./core/filterAndSort";
 import { parseExport } from "./core/parseExport";
 import "./App.css";
 
@@ -29,6 +30,8 @@ function App() {
   const [selectedView, setSelectedView] = useState<ViewKey>("notFollowingBack");
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState<SortBy>("username");
 
   async function handleDrop(event: React.DragEvent<HTMLDivElement>) {
     event.preventDefault();
@@ -47,6 +50,8 @@ function App() {
     const parsed = parseExport(result);
     setViews(computeViews(parsed));
     setSelectedView("notFollowingBack");
+    setSearch("");
+    setSortBy("username");
   }
 
   return (
@@ -108,8 +113,26 @@ function App() {
             ))}
           </div>
 
+          <div className="list-controls">
+            <input
+              type="text"
+              className="search-input"
+              placeholder="Search by username"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            <select
+              className="sort-select"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortBy)}
+            >
+              <option value="username">Sort: username (A–Z)</option>
+              <option value="date">Sort: relationship date</option>
+            </select>
+          </div>
+
           <ul className="account-list">
-            {views[selectedView].map((account) => (
+            {filterAndSort(views[selectedView], { search, sortBy }).map((account) => (
               <li key={account.username}>
                 <a
                   href={`https://instagram.com/${account.username}`}

@@ -76,8 +76,28 @@
   font-size: 0.85rem;
 }
 
-.account-list {
+.list-controls {
+  display: flex;
+  gap: 0.5rem;
   margin-top: 1.5rem;
+}
+
+.search-input,
+.sort-select {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #333;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+
+.search-input {
+  flex: 1;
+}
+
+.account-list {
+  margin-top: 1rem;
   list-style: none;
   padding: 0;
 }
