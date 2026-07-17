@@ -75,10 +75,19 @@ function App() {
 
   return (
     <main className="app">
-      <h1>Who doesn't follow me back</h1>
+      <header className="app-header">
+        <h1>Who doesn't follow me back</h1>
+        <p className="trust-line">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <rect x="3" y="11" width="18" height="11" rx="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
+          Everything runs in your browser. Nothing is uploaded.
+        </p>
+      </header>
 
       <div
-        className={`dropzone${isDragging ? " dropzone--active" : ""}`}
+        className={`dropzone${isDragging ? " dropzone--active" : ""}${views ? " dropzone--compact" : ""}`}
         onDragOver={(e) => {
           e.preventDefault();
           setIsDragging(true);
@@ -86,16 +95,39 @@ function App() {
         onDragLeave={() => setIsDragging(false)}
         onDrop={handleDrop}
       >
-        Drop your Instagram data export <code>.zip</code>, or the individual{" "}
-        <code>following.json</code> and <code>followers_*.json</code> files,
-        here
+        <span className="dropzone__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 15V3" />
+            <path d="m7 8 5-5 5 5" />
+            <path d="M20 15v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-4" />
+          </svg>
+        </span>
+        <span className="dropzone__hint dropzone__hint--full">
+          Drop your Instagram data export <code>.zip</code>, or the individual{" "}
+          <code>following.json</code> and <code>followers_*.json</code> files,
+          here
+        </span>
+        <span className="dropzone__hint dropzone__hint--compact">
+          Drop a new export to refresh your dashboard
+        </span>
       </div>
 
-      {error && <p className="error-message">{error}</p>}
+      {error && (
+        <div className="error-message" role="alert">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 8v4" />
+            <path d="M12 16h.01" />
+          </svg>
+          <p>{error}</p>
+        </div>
+      )}
 
       {!views && !error && (
         <div className="onboarding">
-          <p>New here? Get your export from Instagram first:</p>
+          <p className="onboarding__lead">
+            New here? Get your export from Instagram first:
+          </p>
           <ol>
             <li>
               Go to{" "}
@@ -160,45 +192,69 @@ function App() {
           </div>
 
           {showIgnored ? (
-            <ul className="account-list">
-              {[...ignored].sort().map((username) => (
-                <li key={username}>
-                  <a
-                    href={`https://instagram.com/${username}`}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    {username}
-                  </a>
-                  <button type="button" onClick={() => toggleIgnored(username)}>
-                    Un-ignore
-                  </button>
-                </li>
-              ))}
-            </ul>
+            ignored.size === 0 ? (
+              <p className="list-empty">
+                No ignored accounts yet. Ignore an account to hide it from your
+                lists.
+              </p>
+            ) : (
+              <ul className="account-list">
+                {[...ignored].sort().map((username) => (
+                  <li key={username}>
+                    <a
+                      href={`https://instagram.com/${username}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {username}
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => toggleIgnored(username)}
+                    >
+                      Un-ignore
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )
           ) : (
-            <ul className="account-list">
-              {filterAndSort(visibleLists[selectedView], {
+            (() => {
+              const rows = filterAndSort(visibleLists[selectedView], {
                 search,
                 sortBy,
-              }).map((account) => (
-                <li key={account.username}>
-                  <a
-                    href={`https://instagram.com/${account.username}`}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    {account.username}
-                  </a>
-                  <button
-                    type="button"
-                    onClick={() => toggleIgnored(account.username)}
-                  >
-                    {ignored.has(account.username) ? "Un-ignore" : "Ignore"}
-                  </button>
-                </li>
-              ))}
-            </ul>
+              });
+              if (rows.length === 0) {
+                return (
+                  <p className="list-empty">
+                    {search
+                      ? `No accounts match "${search}".`
+                      : "No accounts in this view."}
+                  </p>
+                );
+              }
+              return (
+                <ul className="account-list">
+                  {rows.map((account) => (
+                    <li key={account.username}>
+                      <a
+                        href={`https://instagram.com/${account.username}`}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        {account.username}
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => toggleIgnored(account.username)}
+                      >
+                        {ignored.has(account.username) ? "Un-ignore" : "Ignore"}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              );
+            })()
           )}
         </>
       )}
