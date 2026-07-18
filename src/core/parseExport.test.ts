@@ -64,6 +64,70 @@ describe("parseExport", () => {
     ]);
   });
 
+  it("normalizes followers_1.json records wrapped in relationships_followers (real Instagram export shape)", () => {
+    const followersJson = {
+      relationships_followers: [
+        {
+          title: "",
+          media_list_data: [],
+          string_list_data: [
+            {
+              href: "https://www.instagram.com/bob",
+              value: "bob",
+              timestamp: 1620000000,
+            },
+          ],
+        },
+      ],
+    };
+
+    const result = parseExport({
+      followingJson: { relationships_following: [] },
+      followersJsonFiles: [followersJson],
+      pendingJson: [],
+    });
+
+    expect(result.followers).toEqual([
+      {
+        username: "bob",
+        profileUrl: "https://www.instagram.com/bob",
+        timestamp: 1620000000,
+      },
+    ]);
+  });
+
+  it("normalizes pending_follow_requests.json wrapped in relationships_follow_requests_sent (real Instagram export shape)", () => {
+    const pendingJson = {
+      relationships_follow_requests_sent: [
+        {
+          title: "",
+          media_list_data: [],
+          string_list_data: [
+            {
+              href: "https://www.instagram.com/erin",
+              value: "erin",
+              timestamp: 1640000000,
+            },
+          ],
+        },
+      ],
+    };
+
+    const result = parseExport({
+      followingJson: { relationships_following: [] },
+      followersJsonFiles: [],
+      pendingJson,
+    });
+
+    expect(result.pending).toEqual([
+      {
+        username: "erin",
+        profileUrl: "https://www.instagram.com/erin",
+        timestamp: 1640000000,
+      },
+    ]);
+  });
+
   it("returns empty lists when both exports are empty", () => {
     const result = parseExport({
       followingJson: { relationships_following: [] },

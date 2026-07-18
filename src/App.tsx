@@ -47,25 +47,39 @@ function App() {
     );
   }
 
-  async function handleDrop(event: React.DragEvent<HTMLDivElement>) {
+  async function processFiles(files: File[]) {
+    try {
+      const result = await readDroppedFiles(files);
+
+      if (result.kind !== "ok") {
+        setError(ERROR_MESSAGES[result.kind]);
+        setViews(null);
+        return;
+      }
+
+      const parsed = parseExport(result);
+      setError(null);
+      setViews(computeViews(parsed));
+      setSelectedView("notFollowingBack");
+      setSearch("");
+      setSortBy("username");
+    } catch {
+      setError(ERROR_MESSAGES.unrecognized);
+      setViews(null);
+    }
+  }
+
+  function handleDrop(event: React.DragEvent<HTMLLabelElement>) {
     event.preventDefault();
     setIsDragging(false);
+    processFiles(Array.from(event.dataTransfer.files));
+  }
 
-    const files = Array.from(event.dataTransfer.files);
-    const result = await readDroppedFiles(files);
-
-    if (result.kind !== "ok") {
-      setError(ERROR_MESSAGES[result.kind]);
-      setViews(null);
-      return;
+  function handleFileSelect(event: React.ChangeEvent<HTMLInputElement>) {
+    if (event.target.files) {
+      processFiles(Array.from(event.target.files));
     }
-
-    setError(null);
-    const parsed = parseExport(result);
-    setViews(computeViews(parsed));
-    setSelectedView("notFollowingBack");
-    setSearch("");
-    setSortBy("username");
+    event.target.value = "";
   }
 
   const visibleLists: Views | null = views && {
@@ -86,7 +100,7 @@ function App() {
         </p>
       </header>
 
-      <div
+      <label
         className={`dropzone${isDragging ? " dropzone--active" : ""}${views ? " dropzone--compact" : ""}`}
         onDragOver={(e) => {
           e.preventDefault();
@@ -95,6 +109,13 @@ function App() {
         onDragLeave={() => setIsDragging(false)}
         onDrop={handleDrop}
       >
+        <input
+          type="file"
+          className="dropzone__input"
+          multiple
+          accept=".zip,.json"
+          onChange={handleFileSelect}
+        />
         <span className="dropzone__icon" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 15V3" />
@@ -110,7 +131,7 @@ function App() {
         <span className="dropzone__hint dropzone__hint--compact">
           Drop a new export to refresh your dashboard
         </span>
-      </div>
+      </label>
 
       {error && (
         <div className="error-message" role="alert">

@@ -10,12 +10,27 @@ interface RawRecord {
   string_list_data: RawStringListEntry[];
 }
 
-interface FollowingExport {
-  relationships_following: RawRecord[];
+// Instagram wraps each relationship file's array in a single top-level key
+// whose name varies by file (relationships_following, relationships_followers,
+// relationships_follow_requests_sent, ...). Rather than hardcode every key
+// name, find whichever property holds the array.
+function extractRecords(json: unknown): RawRecord[] {
+  if (Array.isArray(json)) {
+    return json as RawRecord[];
+  }
+  if (json && typeof json === "object") {
+    const arrayValue = Object.values(json).find((value) =>
+      Array.isArray(value),
+    );
+    if (arrayValue) {
+      return arrayValue as RawRecord[];
+    }
+  }
+  return [];
 }
 
-function toAccounts(records: RawRecord[]): Account[] {
-  return records.map((record) => {
+function toAccounts(json: unknown): Account[] {
+  return extractRecords(json).map((record) => {
     const entry = record.string_list_data[0];
     return {
       username: entry.value,
@@ -30,14 +45,9 @@ export function parseExport(input: {
   followersJsonFiles: unknown[];
   pendingJson: unknown;
 }): ParsedExport {
-  const followingJson = input.followingJson as FollowingExport;
-  const following = toAccounts(followingJson.relationships_following);
-
-  const followers = (input.followersJsonFiles as RawRecord[][]).flatMap(
-    toAccounts,
-  );
-
-  const pending = toAccounts(input.pendingJson as RawRecord[]);
+  const following = toAccounts(input.followingJson);
+  const followers = input.followersJsonFiles.flatMap(toAccounts);
+  const pending = toAccounts(input.pendingJson);
 
   return { following, followers, pending };
 }
