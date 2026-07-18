@@ -24,11 +24,16 @@ const VIEW_CARDS: { key: ViewKey; label: string }[] = [
 const DOWNLOAD_INFO_URL =
   "https://accountscenter.instagram.com/info_and_permissions/dyi/";
 
-const ERROR_MESSAGES: Record<"html-export" | "unrecognized", string> = {
+const ERROR_MESSAGES: Record<
+  "html-export" | "unrecognized" | "zip-error",
+  string
+> = {
   "html-export":
     "That looks like the HTML-format export. This app needs the JSON format — re-request your download and choose \"JSON\" instead of \"HTML\" as the file format.",
   unrecognized:
-    "That doesn't look like an Instagram data export. Drop the export ZIP, or the following.json and followers_*.json files from inside it.",
+    "The ZIP opened, but it doesn't contain a following.json. If Instagram split your download into multiple ZIP files, drop all of them together, or drop the following.json and followers_*.json files directly.",
+  "zip-error":
+    "We couldn't open that ZIP file. It may be a partial or corrupted download — try downloading the export from Instagram again, then drop the .zip here.",
 };
 
 function App() {
