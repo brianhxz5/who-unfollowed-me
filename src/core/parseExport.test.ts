@@ -128,6 +128,78 @@ describe("parseExport", () => {
     ]);
   });
 
+  it("skips records with an empty string_list_data instead of crashing", () => {
+    const followingJson = {
+      relationships_following: [
+        {
+          title: "",
+          media_list_data: [],
+          string_list_data: [
+            {
+              href: "https://www.instagram.com/alice",
+              value: "alice",
+              timestamp: 1614556800,
+            },
+          ],
+        },
+        { title: "", media_list_data: [], string_list_data: [] },
+      ],
+    };
+
+    const result = parseExport({
+      followingJson,
+      followersJsonFiles: [],
+      pendingJson: [],
+    });
+
+    expect(result.following).toEqual([
+      {
+        username: "alice",
+        profileUrl: "https://www.instagram.com/alice",
+        timestamp: 1614556800,
+      },
+    ]);
+  });
+
+  it("skips records whose entry has no username value", () => {
+    const followingJson = {
+      relationships_following: [
+        {
+          title: "",
+          media_list_data: [],
+          string_list_data: [
+            { href: "https://www.instagram.com/alice", timestamp: 1614556800 },
+          ],
+        },
+        {
+          title: "",
+          media_list_data: [],
+          string_list_data: [
+            {
+              href: "https://www.instagram.com/bob",
+              value: "bob",
+              timestamp: 1614556800,
+            },
+          ],
+        },
+      ],
+    };
+
+    const result = parseExport({
+      followingJson,
+      followersJsonFiles: [],
+      pendingJson: [],
+    });
+
+    expect(result.following).toEqual([
+      {
+        username: "bob",
+        profileUrl: "https://www.instagram.com/bob",
+        timestamp: 1614556800,
+      },
+    ]);
+  });
+
   it("returns empty lists when both exports are empty", () => {
     const result = parseExport({
       followingJson: { relationships_following: [] },
