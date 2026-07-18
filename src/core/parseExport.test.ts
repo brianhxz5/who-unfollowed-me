@@ -161,19 +161,63 @@ describe("parseExport", () => {
     ]);
   });
 
-  it("skips records whose entry has no username value", () => {
+  it("derives username from href when the entry has no value field (real following.json shape)", () => {
     const followingJson = {
       relationships_following: [
         {
           title: "",
-          media_list_data: [],
           string_list_data: [
             { href: "https://www.instagram.com/alice", timestamp: 1614556800 },
           ],
         },
+      ],
+    };
+
+    const result = parseExport({
+      followingJson,
+      followersJsonFiles: [],
+      pendingJson: [],
+    });
+
+    expect(result.following).toEqual([
+      {
+        username: "alice",
+        profileUrl: "https://www.instagram.com/alice",
+        timestamp: 1614556800,
+      },
+    ]);
+  });
+
+  it("derives username from an href with a trailing slash or query string", () => {
+    const followingJson = {
+      relationships_following: [
         {
-          title: "",
-          media_list_data: [],
+          string_list_data: [
+            { href: "https://www.instagram.com/carol/", timestamp: 1 },
+          ],
+        },
+        {
+          string_list_data: [
+            { href: "https://instagram.com/dave?hl=en", timestamp: 2 },
+          ],
+        },
+      ],
+    };
+
+    const result = parseExport({
+      followingJson,
+      followersJsonFiles: [],
+      pendingJson: [],
+    });
+
+    expect(result.following.map((a) => a.username)).toEqual(["carol", "dave"]);
+  });
+
+  it("skips records that have neither a value nor a usable href", () => {
+    const followingJson = {
+      relationships_following: [
+        { string_list_data: [{ timestamp: 1614556800 }] },
+        {
           string_list_data: [
             {
               href: "https://www.instagram.com/bob",

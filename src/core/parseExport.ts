@@ -29,20 +29,47 @@ function extractRecords(json: unknown): RawRecord[] {
   return [];
 }
 
+// Instagram's export is inconsistent between files: followers entries carry the
+// username in `value`, but following entries often omit `value` entirely and
+// only provide the profile `href` (https://www.instagram.com/<username>). Pull
+// the username from the href's last path segment as a fallback.
+function usernameFromHref(href: string): string {
+  let path = href;
+  try {
+    path = new URL(href).pathname;
+  } catch {
+    // Not a fully-qualified URL — fall through and treat the raw string as a path.
+  }
+  const segment = path.split("/").filter(Boolean).pop();
+  return segment ? segment.trim() : "";
+}
+
 function toAccounts(json: unknown): Account[] {
   const accounts: Account[] = [];
   for (const record of extractRecords(json)) {
     const entry = record?.string_list_data?.[0];
-    // Skip malformed/partial records: real exports occasionally include
-    // entries with an empty string_list_data or a missing username. These
-    // can't become a usable profile row, and letting them through emits an
-    // account with an undefined username that later crashes rendering.
-    if (!entry || typeof entry.value !== "string") {
+    if (!entry) {
       continue;
     }
+
+    const href = typeof entry.href === "string" ? entry.href : "";
+    const username =
+      typeof entry.value === "string" && entry.value.trim()
+        ? entry.value.trim()
+        : href
+          ? usernameFromHref(href)
+          : "";
+
+    // Skip records we can't turn into a usable profile row — without a username
+    // there's nothing to link to, and an undefined username later crashes
+    // rendering.
+    if (!username) {
+      continue;
+    }
+
     accounts.push({
-      username: entry.value,
-      profileUrl: typeof entry.href === "string" ? entry.href : "",
+      username,
+      profileUrl: href || `https://www.instagram.com/${username}`,
       timestamp: typeof entry.timestamp === "number" ? entry.timestamp : 0,
     });
   }
