@@ -40,6 +40,7 @@ function App() {
   const [views, setViews] = useState<Views | null>(null);
   const [selectedView, setSelectedView] = useState<ViewKey>("notFollowingBack");
   const [isDragging, setIsDragging] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<SortBy>("username");
@@ -53,6 +54,7 @@ function App() {
   }
 
   async function processFiles(files: File[]) {
+    setIsLoading(true);
     try {
       const result = await readDroppedFiles(files);
 
@@ -71,6 +73,8 @@ function App() {
     } catch {
       setError(ERROR_MESSAGES.unrecognized);
       setViews(null);
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -95,21 +99,22 @@ function App() {
   return (
     <main className="app">
       <header className="app-header">
-        <h1>Who doesn't follow me back</h1>
+        <h1>who doesn't follow me back</h1>
         <p className="trust-line">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <rect x="3" y="11" width="18" height="11" rx="2" />
             <path d="M7 11V7a5 5 0 0 1 10 0v4" />
           </svg>
-          Everything runs in your browser. Nothing is uploaded.
+          Your data never leaves this browser tab.
         </p>
       </header>
 
       <label
-        className={`dropzone${isDragging ? " dropzone--active" : ""}${views ? " dropzone--compact" : ""}`}
+        className={`dropzone${isDragging ? " dropzone--active" : ""}${views ? " dropzone--compact" : ""}${isLoading ? " dropzone--loading" : ""}`}
+        aria-busy={isLoading}
         onDragOver={(e) => {
           e.preventDefault();
-          setIsDragging(true);
+          if (!isLoading) setIsDragging(true);
         }}
         onDragLeave={() => setIsDragging(false)}
         onDrop={handleDrop}
@@ -119,23 +124,36 @@ function App() {
           className="dropzone__input"
           multiple
           accept=".zip,.json"
+          disabled={isLoading}
           onChange={handleFileSelect}
         />
         <span className="dropzone__icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 15V3" />
-            <path d="m7 8 5-5 5 5" />
-            <path d="M20 15v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-4" />
-          </svg>
+          {isLoading ? (
+            <span className="dropzone__spinner" />
+          ) : (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 15V3" />
+              <path d="m7 8 5-5 5 5" />
+              <path d="M20 15v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-4" />
+            </svg>
+          )}
         </span>
-        <span className="dropzone__hint dropzone__hint--full">
-          Drop your Instagram data export <code>.zip</code>, or the individual{" "}
-          <code>following.json</code> and <code>followers_*.json</code> files,
-          here
-        </span>
-        <span className="dropzone__hint dropzone__hint--compact">
-          Drop a new export to refresh your dashboard
-        </span>
+        {isLoading ? (
+          <span className="dropzone__hint" role="status">
+            Reading your export…
+          </span>
+        ) : (
+          <>
+            <span className="dropzone__hint dropzone__hint--full">
+              Drop your Instagram data export <code>.zip</code>, or the
+              individual <code>following.json</code> and{" "}
+              <code>followers_*.json</code> files, here
+            </span>
+            <span className="dropzone__hint dropzone__hint--compact">
+              Drop a new export to refresh your dashboard
+            </span>
+          </>
+        )}
       </label>
 
       {error && (
@@ -210,10 +228,11 @@ function App() {
             </select>
             <button
               type="button"
-              className="ignored-toggle"
+              className={`ignored-toggle${showIgnored ? " ignored-toggle--active" : ""}`}
+              aria-pressed={showIgnored}
               onClick={() => setShowIgnored((v) => !v)}
             >
-              ignored ({ignored.size})
+              Ignored ({ignored.size})
             </button>
           </div>
 

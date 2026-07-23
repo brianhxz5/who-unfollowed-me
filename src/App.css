@@ -112,6 +112,36 @@
   transform: scale(1.08);
 }
 
+/* Loading: while the export is being read/unzipped and parsed. The dropzone
+   stops inviting a drop and shows a spinner in place of the upload icon. */
+.dropzone--loading {
+  cursor: progress;
+  border-style: solid;
+  border-color: var(--accent-border);
+  background: var(--accent-quiet);
+}
+
+.dropzone__spinner {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2.5px solid var(--accent-border);
+  border-top-color: var(--accent);
+  animation: dropzone-spin 0.7s linear infinite;
+}
+
+@keyframes dropzone-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dropzone__spinner {
+    animation-duration: 1.4s;
+  }
+}
+
 /* Compact once a dashboard is showing: the drop target stays available
    for re-dropping a new export, but recedes visually. */
 .dropzone--compact {
@@ -360,6 +390,13 @@
   color: var(--muted);
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
+}
+
+.ignored-toggle--active,
+.ignored-toggle--active:hover {
+  border-color: var(--accent-border);
+  background: var(--accent-quiet);
+  color: var(--accent-strong);
 }
 
 /* ---- Account list ---------------------------------------------------- */
